@@ -1,0 +1,187 @@
+group x86;
+
+program(d, s, l, m) ::= <<
+global main
+
+extern printf
+
+section .data
+	_format_string: DB "%d",0xA,0
+	<d:{d|<d>}>
+
+section .text
+main:
+<l:{l|<declcalc(l=(l), t=m.(l))>}>
+<s:{s|<s>}>
+	mov eax, 0
+	ret
+>>
+
+declaration(v, s) ::= <<
+_<v>: DD 0
+
+>>
+
+declcalc(l, t) ::= <<
+<t>
+	pop dword [_<l>]
+
+>>
+
+if(b, i, e) ::= <<
+<e>
+	pop eax
+	mov ebx, 0
+	cmp eax, ebx
+	jne if<i>
+	jmp doneif<i>
+if<i>:
+<b>
+doneif<i>:
+
+>>
+
+loop(b, l, e) ::= <<
+loop<l>:
+<e>
+	pop eax
+	mov ebx, 0
+	cmp eax, ebx
+	je doneloop<l>
+<b>
+	jmp loop<l>
+doneloop<l>:
+
+>>
+
+print(e) ::= <<
+<e>
+	push _format_string
+	call printf
+	add esp, 8
+
+>>
+
+assign(e, v) ::= <<
+<e>
+	pop dword [_<v>] 
+
+>>
+
+expreq(e1, e2, c) ::= <<
+<e1>
+<e2>
+	pop ebx
+	pop eax
+	cmp eax, ebx
+	je comp<c>
+	mov eax, 0
+	push eax
+	jmp donecomp<c>
+comp<c>:
+	mov eax, 1
+	push eax
+donecomp<c>:	
+
+>>
+
+exprneq(e1, e2, c) ::= <<
+<e1>
+<e2>
+	pop ebx
+	pop eax
+	cmp eax, ebx
+	jne comp<c>
+	mov eax, 0
+	push eax
+	jmp donecomp<c>
+comp<c>:
+	mov eax, 1
+	push eax
+donecomp<c>:	
+
+>>
+
+exprlt(e1, e2, c) ::= <<
+<e1>
+<e2>
+	pop ebx
+	pop eax
+	cmp eax, ebx
+	jl comp<c>
+	mov eax, 0
+	push eax
+	jmp donecomp<c>
+comp<c>:
+	mov eax, 1
+	push eax
+donecomp<c>:	
+
+>>
+
+exprgt(e1, e2, c) ::= <<
+<e1>
+<e2>
+	pop ebx
+	pop eax
+	cmp eax, ebx
+	jg comp<c>
+	mov eax, 0
+	push eax
+	jmp donecomp<c>
+comp<c>:
+	mov eax, 1
+	push eax
+donecomp<c>:	
+
+>>
+
+expradd(e1, e2) ::= <<
+<e1>
+<e2>
+	pop ebx
+	pop eax
+	add eax, ebx
+	push eax
+>>
+
+exprsub(e1, e2) ::= <<
+<e1>
+<e2>
+	pop ebx
+	pop eax
+	sub eax, ebx
+	push eax
+>>
+
+exprmul(e1, e2) ::= <<
+<e1>
+<e2>
+	pop ebx
+	pop eax
+	imul eax, ebx
+	push eax
+>>
+
+exprdiv(e1, e2) ::= <<
+<e1>
+<e2>
+	pop ebx
+	pop eax
+	xor edx, edx
+	idiv ebx
+	push eax
+>>
+
+exprint(v1, v2) ::= <<
+	mov eax, 0x<v1><v2>
+	push eax
+>>
+
+block(s) ::= <<
+<s:{s|<s>}>
+>>
+
+exprvar(v) ::= <<
+	push dword [_<v>]
+>>

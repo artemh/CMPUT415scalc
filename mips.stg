@@ -1,0 +1,187 @@
+group mips;
+
+program(d, s, l, m) ::= <<
+.data
+	_new_line: .asciiz "\n"
+<d:{d|<d>}>
+
+.text
+main:
+<l:{l|<declcalc(l=(l), t=m.(l))>}>
+<s:{s|<s>}>
+	li $v0, 10
+	syscall
+>>
+
+declaration(v) ::= <<
+	_<v>: .word 0
+
+>>
+
+declcalc(l, t) ::= <<
+<t>
+	lw $t0, 0($sp)
+	addi $sp, $sp, 4
+	la $t1, _<l>
+	sw $t0, 0($t1)
+
+>>
+
+if(b, i, e) ::= <<
+<e>
+	lw $t0, 0($sp)
+	addi $sp, $sp, 4
+	bgtz $t0, if<i>
+	j doneif<i>
+if<i>:
+<b>
+doneif<i>:
+
+>>
+
+loop(b, l, e) ::= <<
+loop<l>:
+<e>
+	lw $t0, 0($sp)
+	addi $sp, $sp, 4
+	bgtz $t0, loopb<l>
+	j doneloop<l>
+loopb<l>:
+<b>
+	j loop<l>
+doneloop<l>:
+
+>>
+
+print(e) ::= <<
+<e>
+	li $v0, 1
+	lw $a0, 0($sp)
+	addi $sp, $sp, 4
+	syscall
+	li $v0, 4
+	la $a0, _new_line
+	syscall
+
+>>
+
+assign(e, v) ::= <<
+<e>
+	lw $t0, 0($sp)
+	addi $sp, $sp, 4
+	la $t1, _<v>
+	sw $t0, 0($t1)
+
+>>
+
+expreq(e1, e2, c) ::= <<
+<e1>
+<e2>
+	lw $t1, 0($sp)
+	lw $t0, 4($sp)
+	addi $sp, $sp, 4
+	beq $t0, $t1, comp<c>
+	add $t0, $zero, $zero
+	sw $t0, 0($sp)
+	j donecomp<c>
+comp<c>:
+	addi $t0, $zero, 1
+	sw $t0, 0($sp)
+donecomp<c>:	
+
+>>
+
+exprneq(e1, e2, c) ::= <<
+<e1>
+<e2>
+	lw $t1, 0($sp)
+	lw $t0, 4($sp)
+	addi $sp, $sp, 4
+	bne $t0, $t1, comp<c>
+	add $t0, $zero, $zero
+	 $t0, 0($sp)
+	j donecomp<c>
+comp<c>:
+	addi $t0, $zero, 1
+	sw $t0, 0($sp)
+donecomp<c>:
+
+>>
+
+exprlt(e1, e2, c) ::= <<
+<e1>
+<e2>
+	lw $t1, 0($sp)
+	lw $t0, 4($sp)
+	addi $sp, $sp, 4
+	slt $t0, $t0, $t1
+	sw $t0, 0($sp)
+>>
+
+exprgt(e1, e2, c) ::= <<
+<e1>
+<e2>
+	lw $t1, 0($sp)
+	lw $t0, 4($sp)
+	addi $sp, $sp, 4
+	slt $t0, $t1, $t0
+	sw $t0, 0($sp)
+>>
+
+expradd(e1, e2) ::= <<
+<e1>
+<e2>
+	lw $t1, 0($sp)
+	lw $t0, 4($sp)
+	addi $sp, $sp, 4
+	add $t0, $t0, $t1
+	sw $t0, 0($sp)
+>>
+
+exprsub(e1, e2) ::= <<
+<e1>
+<e2>
+	lw $t1, 0($sp)
+	lw $t0, 4($sp)
+	addi $sp, $sp, 4
+	sub $t0, $t0, $t1
+	sw $t0, 0($sp)
+>>
+
+exprmul(e1, e2) ::= <<
+<e1>
+<e2>
+	lw $t1, 0($sp)
+	lw $t0, 4($sp)
+	addi $sp, $sp, 4
+	mul $t0, $t0, $t1
+	sw $t0, 0($sp)
+>>
+
+exprdiv(e1, e2) ::= <<
+<e1>
+<e2>
+	lw $t1, 0($sp)
+	lw $t0, 4($sp)
+	addi $sp, $sp, 4
+	div $t0, $t0, $t1
+	sw $t0, 0($sp)
+>>
+
+exprint(v1, v2) ::= <<
+	lui $t0, 0x<v1>
+	ori $t0, $t0, 0x<v2>
+	addi $sp, $sp, -4
+	sw $t0, 0($sp)
+>>
+
+block(s) ::= <<
+<s:{s|<s>}>
+>>
+
+exprvar(v) ::= <<
+	la $t0, _<v>
+	lw $t1, 0($t0)
+	addi $sp, $sp, -4
+	sw $t1, 0($sp)
+>>

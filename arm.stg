@@ -1,0 +1,198 @@
+group arm;
+
+program(d, s) ::=
+<<
+.arch armv7-a
+.data
+	_format_string: .asciz "%d\n"
+<d:{x|<x>}>
+
+.text
+.globl main
+main:
+<l:{l|<declcalc(l=(l), t=m.(l))>}>
+<s:{x|<x>}>
+	mov r0, #0
+	mov r1, #1
+	swi 0
+>>
+
+declaration(v) ::=
+<<
+	_<v>: .word 0
+
+>>
+
+declcalc(l, t) ::= <<
+<t>
+	pop {r0} 
+	ldr r1, =_<l>
+	str r0, [r1]
+
+
+>>
+
+if(b, i, e) ::= <<
+<e>
+	pop {r0}
+	cmp r0, #0
+	bne if<i>
+	b doneif<i>
+if<i>:
+<b>
+doneif<i>:
+
+>>
+
+loop(b, l, e) ::= <<
+loop<l>:
+<e>
+	pop {r0}
+	cmp r0, #0
+	beq doneloop<l>
+<b>
+	b loop<l>
+doneloop<l>:
+
+>>
+
+print(e) ::= <<
+<e>
+	pop {r1}
+	push {ip, lr}
+	ldr r0, =_format_string
+	bl printf
+	mov r0, #0
+	pop {ip, lr}
+
+>>
+
+assign(e, v) ::= <<
+<e>
+	pop {r0} 
+	ldr r1, =_<v>
+	str r0, [r1]
+
+>>
+
+expreq(e1, e2, c) ::= <<
+<e1>
+<e2>
+	pop {r1}
+	pop {r0}
+	cmp r0, r1
+	beq comp<c>
+	mov r0, #0
+	push {r0}
+	b donecomp<c>
+comp<c>:
+	mov r0, #1
+	push {r0}
+donecomp<c>:
+
+>>
+
+exprneq(e1, e2, c) ::= <<
+<e1>
+<e2>
+	pop {r1}
+	pop {r0}
+	cmp r0, r1
+	bne comp<c>
+	mov r0, #0
+	push {r0}
+	b donecomp<c>
+comp<c>:
+	mov r0, #1
+	push {r0}
+donecomp<c>:	
+
+>>
+
+exprlt(e1, e2, c) ::= <<
+<e1>
+<e2>
+	pop {r1}
+	pop {r0}
+	cmp r0, r1
+	blt comp<c>
+	mov r0, #0
+	push {r0}
+	b donecomp<c>
+comp<c>:
+	mov r0, #1
+	push {r0}
+donecomp<c>:	
+
+>>
+
+exprgt(e1, e2, c) ::= <<
+<e1>
+<e2>
+	pop {r1}
+	pop {r0}
+	cmp r1, r0
+	blt comp<c>
+	mov r0, #0
+	push {r0}
+	b donecomp<c>
+comp<c>:
+	mov r0, #1
+	push {r0}
+donecomp<c>:
+
+>>
+
+expradd(e1, e2) ::= <<
+<e1>
+<e2>
+	pop {r1}
+	pop {r0}
+	add r0, r0, r1
+	push {r0}
+>>
+
+exprsub(e1, e2) ::= <<
+<e1>
+<e2>
+	pop {r1}
+	pop {r0}
+	sub r0, r0, r1
+	push {r0}
+>>
+
+exprmul(e1, e2) ::= <<
+<e1>
+<e2>
+	pop {r1}
+	pop {r0}
+	mul r0, r0, r1
+	push {r0}
+>>
+
+exprdiv(e1, e2) ::= <<
+<e1>
+<e2>
+	pop {r1}
+	pop {r0}
+	push {ip, lr}
+	bl __aeabi_idiv(PLT)
+	pop {ip, lr}
+	push {r0}
+>>
+
+exprint(v1, v2) ::= <<
+	movw r0, #0x<v2>
+	movt r0, #0x<v1>
+	push {r0}
+>>
+
+block(s) ::= <<
+<s:{s|<s>}>
+>>
+
+exprvar(v) ::= <<
+	ldr r0, =_<v>
+	ldr r0, [r0]
+	push {r0}
+>>
